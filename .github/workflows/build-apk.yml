@@ -30,9 +30,54 @@ jobs:
       - name: Create twa-build directory
         run: mkdir twa-build
 
-      - name: Initialise Bubblewrap project
+      - name: Write twa-manifest.json directly
         working-directory: twa-build
-        run: echo "n" | bubblewrap init --manifest=https://incomesplitter.github.io/income-splitter2/manifest.json --packageId=com.incomesplitter.app
+        run: |
+          cat > twa-manifest.json << 'TWAMAN'
+          {
+            "packageId": "com.incomesplitter.app",
+            "host": "incomesplitter.github.io",
+            "name": "Income Splitter",
+            "launcherName": "Splitter",
+            "display": "standalone",
+            "themeColor": "#0f1117",
+            "navigationColor": "#0f1117",
+            "navigationColorDark": "#0f1117",
+            "navigationDividerColor": "#0f1117",
+            "navigationDividerColorDark": "#0f1117",
+            "backgroundColor": "#0f1117",
+            "enableNotifications": false,
+            "startUrl": "/income-splitter2/",
+            "iconUrl": "https://incomesplitter.github.io/income-splitter2/icon-512.png",
+            "maskableIconUrl": "https://incomesplitter.github.io/income-splitter2/icon-512.png",
+            "monochromeIconUrl": "https://incomesplitter.github.io/income-splitter2/icon-512.png",
+            "splashScreenFadeOutDuration": 300,
+            "signingKey": {
+              "path": "./android.keystore",
+              "alias": "incomesplitter"
+            },
+            "appVersionCode": 1,
+            "appVersionName": "1.0.0",
+            "shortcuts": [],
+            "generatorApp": "bubblewrap-cli",
+            "webManifestUrl": "https://incomesplitter.github.io/income-splitter2/manifest.json",
+            "fallbackType": "customtabs",
+            "features": {},
+            "alphaDependencies": {
+              "enabled": false
+            },
+            "enableSiteSettingsShortcut": true,
+            "isChromeOSOnly": false,
+            "isMetaQuest": false,
+            "fullScopeUrl": "https://incomesplitter.github.io/income-splitter2/",
+            "minSdkVersion": 19,
+            "orientation": "portrait"
+          }
+          TWAMAN
+
+      - name: Generate Android project from twa-manifest
+        working-directory: twa-build
+        run: bubblewrap generate --manifest=./twa-manifest.json
 
       - name: Build APK
         working-directory: twa-build
