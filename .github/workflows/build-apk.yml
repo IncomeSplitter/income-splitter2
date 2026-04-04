@@ -90,8 +90,7 @@ jobs:
           # AndroidManifest.xml
           cat > twa-app/app/src/main/AndroidManifest.xml << 'MANEOF'
           <?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:tools="http://schemas.android.com/tools">
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <queries>
                   <intent>
                       <action android:name="android.intent.action.VIEW" />
@@ -102,12 +101,10 @@ jobs:
               <application
                   android:label="Income Splitter"
                   android:icon="@mipmap/ic_launcher"
-                  android:theme="@style/Theme.LauncherActivity"
-                  tools:replace="android:theme">
+                  android:theme="@style/Theme.LauncherActivity">
                   <activity
-                      android:name="com.google.androidbrowserhelper.customtabs.CustomTabsLauncherActivity""
-                      android:exported="true"
-                      android:theme="@style/Theme.LauncherActivity">
+                      android:name="com.google.androidbrowserhelper.customtabs.CustomTabsLauncherActivity"
+                      android:exported="true">
                       <meta-data
                           android:name="android.support.customtabs.trusted.DEFAULT_URL"
                           android:value="https://incomesplitter.github.io/income-splitter2/" />
@@ -117,20 +114,9 @@ jobs:
                       <meta-data
                           android:name="android.support.customtabs.trusted.SPLASH_SCREEN_BACKGROUND_COLOR"
                           android:value="@color/colorPrimary" />
-                      <meta-data
-                          android:name="android.support.customtabs.trusted.FALLBACK_STRATEGY"
-                          android:value="customtabs" />
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN" />
                           <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-                      <intent-filter android:autoVerify="true">
-                          <action android:name="android.intent.action.VIEW"/>
-                          <category android:name="android.intent.category.DEFAULT" />
-                          <category android:name="android.intent.category.BROWSABLE"/>
-                          <data android:scheme="https"
-                                android:host="incomesplitter.github.io"
-                                android:pathPrefix="/income-splitter2" />
                       </intent-filter>
                   </activity>
                   <service
