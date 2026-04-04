@@ -26,6 +26,7 @@ jobs:
         run: |
           mkdir -p twa-app/app/src/main/res/values
           mkdir -p twa-app/app/src/main/res/xml
+          mkdir -p twa-app/app/src/main/res/mipmap-hdpi
           mkdir -p twa-app/app/src/main/java/com/incomesplitter/app
 
           # settings.gradle
@@ -82,19 +83,31 @@ jobs:
           }
           dependencies {
               implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+              implementation 'androidx.appcompat:appcompat:1.6.1'
           }
           APPEOF
 
           # AndroidManifest.xml
           cat > twa-app/app/src/main/AndroidManifest.xml << 'MANEOF'
           <?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools">
+              <queries>
+                  <intent>
+                      <action android:name="android.intent.action.VIEW" />
+                      <category android:name="android.intent.category.BROWSABLE" />
+                      <data android:scheme="https" />
+                  </intent>
+              </queries>
               <application
                   android:label="Income Splitter"
-                  android:theme="@style/Theme.LauncherActivity">
+                  android:icon="@mipmap/ic_launcher"
+                  android:theme="@style/Theme.LauncherActivity"
+                  tools:replace="android:theme">
                   <activity
                       android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
-                      android:exported="true">
+                      android:exported="true"
+                      android:theme="@style/Theme.LauncherActivity">
                       <meta-data
                           android:name="android.support.customtabs.trusted.DEFAULT_URL"
                           android:value="https://incomesplitter.github.io/income-splitter2/" />
@@ -104,6 +117,9 @@ jobs:
                       <meta-data
                           android:name="android.support.customtabs.trusted.SPLASH_SCREEN_BACKGROUND_COLOR"
                           android:value="@color/colorPrimary" />
+                      <meta-data
+                          android:name="android.support.customtabs.trusted.FALLBACK_STRATEGY"
+                          android:value="customtabs" />
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN" />
                           <category android:name="android.intent.category.LAUNCHER" />
@@ -112,7 +128,9 @@ jobs:
                           <action android:name="android.intent.action.VIEW"/>
                           <category android:name="android.intent.category.DEFAULT" />
                           <category android:name="android.intent.category.BROWSABLE"/>
-                          <data android:scheme="https" android:host="incomesplitter.github.io" />
+                          <data android:scheme="https"
+                                android:host="incomesplitter.github.io"
+                                android:pathPrefix="/income-splitter2" />
                       </intent-filter>
                   </activity>
                   <service
@@ -141,11 +159,18 @@ jobs:
           cat > twa-app/app/src/main/res/values/styles.xml << 'STYLEEOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
-              <style name="Theme.LauncherActivity" parent="android:Theme.NoTitleBar.Fullscreen">
+              <style name="Theme.LauncherActivity" parent="Theme.AppCompat.NoActionBar">
                   <item name="android:windowBackground">@color/colorPrimary</item>
+                  <item name="android:statusBarColor">@color/colorPrimary</item>
               </style>
           </resources>
           STYLEEOF
+
+          # Download app icon
+          curl -L "https://incomesplitter.github.io/income-splitter2/icon-512.png" \
+            -o twa-app/app/src/main/res/mipmap-hdpi/ic_launcher.png 2>/dev/null || \
+            cp twa-app/app/src/main/res/mipmap-hdpi/ic_launcher.png \
+            twa-app/app/src/main/res/mipmap-hdpi/ic_launcher.png 2>/dev/null || true
 
           # gradle.properties
           cat > twa-app/gradle.properties << 'PROPEOF'
