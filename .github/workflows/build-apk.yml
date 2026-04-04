@@ -147,6 +147,13 @@ jobs:
           </resources>
           STYLEEOF
 
+          # gradle.properties
+          cat > twa-app/gradle.properties << 'PROPEOF'
+          android.useAndroidX=true
+          android.enableJetifier=true
+          org.gradle.jvmargs=-Xmx2048m
+          PROPEOF
+
           # gradle wrapper properties
           mkdir -p twa-app/gradle/wrapper
           cat > twa-app/gradle/wrapper/gradle-wrapper.properties << 'WRAPEOF'
