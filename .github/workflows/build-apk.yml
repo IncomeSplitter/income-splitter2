@@ -34,7 +34,6 @@ jobs:
         run: |
           mkdir twa-build
           cat > twa-build/twa-manifest.json << 'TWAMAN'
-{
   "packageId": "com.incomesplitter.app",
   "host": "incomesplitter.github.io",
   "name": "Income Splitter",
