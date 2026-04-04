@@ -105,7 +105,7 @@ jobs:
                   android:theme="@style/Theme.LauncherActivity"
                   tools:replace="android:theme">
                   <activity
-                      android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
+                      android:name="com.google.androidbrowserhelper.customtabs.CustomTabsLauncherActivity""
                       android:exported="true"
                       android:theme="@style/Theme.LauncherActivity">
                       <meta-data
