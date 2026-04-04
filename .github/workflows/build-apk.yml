@@ -1,0 +1,52 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Bubblewrap
+        run: npm install -g @bubblewrap/cli
+
+      - name: Create Bubblewrap project
+        run: |
+          mkdir twa-build && cd twa-build
+          bubblewrap init --manifest=https://incomesplitter.github.io/income-splitter2/manifest.json \
+            --packageId=com.incomesplitter.app \
+            --name="Income Splitter" \
+            --shortName="Splitter" \
+            --themeColor="#0f1117" \
+            --backgroundColor="#0f1117" \
+            --iconUrl=https://incomesplitter.github.io/income-splitter2/icon-512.png \
+            --maskableIconUrl=https://incomesplitter.github.io/income-splitter2/icon-512.png
+
+      - name: Build APK
+        run: |
+          cd twa-build
+          bubblewrap build --skipPwaValidation
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: income-splitter-apk
+          path: twa-build/app-release-unsigned.apk
+          if-no-files-found: warn
