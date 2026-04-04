@@ -27,26 +27,22 @@ jobs:
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli
 
-      - name: Create Bubblewrap project
-        run: |
-          mkdir twa-build && cd twa-build
-          bubblewrap init --manifest=https://incomesplitter.github.io/income-splitter2/manifest.json \
-            --packageId=com.incomesplitter.app \
-            --name="Income Splitter" \
-            --shortName="Splitter" \
-            --themeColor="#0f1117" \
-            --backgroundColor="#0f1117" \
-            --iconUrl=https://incomesplitter.github.io/income-splitter2/icon-512.png \
-            --maskableIconUrl=https://incomesplitter.github.io/income-splitter2/icon-512.png
+      - name: Create twa-build directory
+        run: mkdir twa-build
+
+      - name: Initialise Bubblewrap project
+        working-directory: twa-build
+        run: echo "n" | bubblewrap init --manifest=https://incomesplitter.github.io/income-splitter2/manifest.json --packageId=com.incomesplitter.app
 
       - name: Build APK
-        run: |
-          cd twa-build
-          bubblewrap build --skipPwaValidation
+        working-directory: twa-build
+        run: bubblewrap build --skipPwaValidation
 
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: income-splitter-apk
-          path: twa-build/app-release-unsigned.apk
+          path: |
+            twa-build/app-release-unsigned.apk
+            twa-build/app-release-signed.apk
           if-no-files-found: warn
