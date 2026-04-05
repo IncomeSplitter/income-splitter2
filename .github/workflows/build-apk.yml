@@ -104,11 +104,16 @@ jobs:
           '
 
       - name: List output files
-        run: find twa-build -name "*.apk" 2>/dev/null || echo "No APK found"
+        run: find twa-build -name "*.apk" 2>/dev/null || echo "No APK found in twa-build"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: income-splitter-apk
-          path: twa-build/*.apk
+          path: |
+            twa-build/*.apk
+            twa-build/app-release-unsigned.apk
+            twa-build/app-release-signed.apk
+            twa-build/app/build/outputs/apk/**/*.apk
+            twa-build/build/**/*.apk
           if-no-files-found: warn
