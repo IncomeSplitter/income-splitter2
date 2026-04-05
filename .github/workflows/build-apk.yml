@@ -27,17 +27,32 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install Bubblewrap
-        run: npm install -g @bubblewrap/cli
+      - name: Install Bubblewrap and expect
+        run: |
+          npm install -g @bubblewrap/cli
+          sudo apt-get install -y expect
 
       - name: Setup Bubblewrap JDK config
         run: |
           mkdir -p ~/.bubblewrap
           echo '{"jdkPath":"/opt/hostedtoolcache/Java_Temurin-Distributions_jdk/17.0.14-7/x64","androidSdkPath":"/usr/local/lib/android/sdk"}' > ~/.bubblewrap/config.json
 
-      - name: Create TWA manifest
+      - name: Create keystore
+        run: |
+          keytool -genkeypair \
+            -dname "CN=Income Splitter, OU=App, O=IncomeSplitter, L=Auckland, S=Auckland, C=NZ" \
+            -alias incomesplitter \
+            -keypass android \
+            -keystore twa-keystore.jks \
+            -storepass android \
+            -validity 10000 \
+            -keyalg RSA \
+            -keysize 2048
+
+      - name: Write TWA manifest
         run: |
           mkdir twa-build
+          cp twa-keystore.jks twa-build/android.keystore
           python3 -c "
           import json
           manifest = {
@@ -77,21 +92,36 @@ jobs:
           }
           with open('twa-build/twa-manifest.json', 'w') as f:
               json.dump(manifest, f, indent=2)
-          print('Manifest written successfully')
+          print('Manifest written')
           "
 
-      - name: Install expect
-        run: sudo apt-get install -y expect
-
-      - name: Generate TWA project
+      - name: Init Bubblewrap project
         working-directory: twa-build
         run: |
           expect -c '
             log_user 1
+            set timeout 120
             spawn bubblewrap init --manifest=https://incomesplitter.github.io/income-splitter2/manifest.json --skipPwaValidation
-            expect "Do you want Bubblewrap to install the JDK"
-            send "n\r"
-            expect eof
+            expect {
+              "install the JDK" { send "n\r"; exp_continue }
+              "Domain:" { send "\r"; exp_continue }
+              "URL path:" { send "\r"; exp_continue }
+              "Application name:" { send "\r"; exp_continue }
+              "short name:" { send "\r"; exp_continue }
+              "Application version:" { send "\r"; exp_continue }
+              "version code:" { send "\r"; exp_continue }
+              "Display mode:" { send "\r"; exp_continue }
+              "Orientation:" { send "\r"; exp_continue }
+              "status bar" { send "\r"; exp_continue }
+              "navigation bar" { send "\r"; exp_continue }
+              "splash screen" { send "\r"; exp_continue }
+              "icon" { send "\r"; exp_continue }
+              "shortcuts" { send "\r"; exp_continue }
+              "signing key" { send "\r"; exp_continue }
+              "Key store" { send "android\r"; exp_continue }
+              "Key password" { send "android\r"; exp_continue }
+              eof
+            }
           '
           echo "=== Files after init ==="
           ls -la
@@ -101,20 +131,21 @@ jobs:
         run: |
           expect -c '
             log_user 1
-            spawn bubblewrap build --skipPwaValidation --verbose
-            expect "would you like to regenerate your project"
-            send "n\r"
-            expect eof
+            set timeout 300
+            spawn bubblewrap build --skipPwaValidation
+            expect {
+              "regenerate your project" { send "n\r"; exp_continue }
+              "Key Store:" { send "android\r"; exp_continue }
+              "Key password" { send "android\r"; exp_continue }
+              "alias" { send "android\r"; exp_continue }
+              eof
+            }
           '
           echo "=== Files after build ==="
-          ls -la
+          find . -name "*.apk" 2>/dev/null || echo "No APK found"
 
-      - name: List output files
-        run: |
-          echo "=== Searching entire workspace for APKs ==="
-          find /home/runner/work -name "*.apk" 2>/dev/null || echo "No APK anywhere in workspace"
-          echo "=== twa-build directory contents ==="
-          find twa-build -type f 2>/dev/null | head -50
+      - name: Search for APK
+        run: find /home/runner/work -name "*.apk" 2>/dev/null || echo "No APK found anywhere"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -125,5 +156,4 @@ jobs:
             twa-build/app-release-unsigned.apk
             twa-build/app-release-signed.apk
             twa-build/app/build/outputs/apk/**/*.apk
-            twa-build/build/**/*.apk
           if-no-files-found: warn
