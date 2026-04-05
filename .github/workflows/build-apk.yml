@@ -49,55 +49,10 @@ jobs:
             -keyalg RSA \
             -keysize 2048
 
-      - name: Write TWA manifest
-        run: |
-          mkdir twa-build
-          cp twa-keystore.jks twa-build/android.keystore
-          python3 -c "
-          import json
-          manifest = {
-            'packageId': 'com.incomesplitter.app',
-            'host': 'incomesplitter.github.io',
-            'name': 'Income Splitter',
-            'launcherName': 'Splitter',
-            'display': 'standalone',
-            'themeColor': '#0f1117',
-            'navigationColor': '#0f1117',
-            'navigationColorDark': '#0f1117',
-            'navigationDividerColor': '#0f1117',
-            'navigationDividerColorDark': '#0f1117',
-            'backgroundColor': '#0f1117',
-            'enableNotifications': False,
-            'startUrl': '/income-splitter2/',
-            'iconUrl': 'https://incomesplitter.github.io/income-splitter2/icon-512.png',
-            'maskableIconUrl': 'https://incomesplitter.github.io/income-splitter2/icon-512.png',
-            'monochromeIconUrl': 'https://incomesplitter.github.io/income-splitter2/icon-512.png',
-            'splashScreenFadeOutDuration': 300,
-            'signingKey': {'path': './android.keystore', 'alias': 'incomesplitter'},
-            'appVersionCode': 1,
-            'appVersionName': '1.0.0',
-            'shortcuts': [],
-            'generatorApp': 'bubblewrap-cli',
-            'webManifestUrl': 'https://incomesplitter.github.io/income-splitter2/manifest.json',
-            'fallbackType': 'customtabs',
-            'features': {},
-            'alphaDependencies': {'enabled': False},
-            'enableSiteSettingsShortcut': True,
-            'isChromeOSOnly': False,
-            'isMetaQuest': False,
-            'fullScopeUrl': 'https://incomesplitter.github.io/income-splitter2/',
-            'minSdkVersion': 19,
-            'orientation': 'portrait',
-            'fingerprints': [{'name': 'debug', 'value': 'CE:16:3A:54:8D:8F:2F:15:A9:F5:CA:BB:30:76:6F:46:50:67:A2:91:48:DE:B5:CC:40:07:ED:BF:CB:05:19:CC'}]
-          }
-          with open('twa-build/twa-manifest.json', 'w') as f:
-              json.dump(manifest, f, indent=2)
-          print('Manifest written')
-          "
-
       - name: Init Bubblewrap project
-        working-directory: twa-build
+        working-directory: /tmp
         run: |
+          mkdir twa-build && cd twa-build
           expect -c '
             log_user 1
             set timeout 120
@@ -108,52 +63,53 @@ jobs:
               "URL path:" { send "\r"; exp_continue }
               "Application name:" { send "\r"; exp_continue }
               "short name:" { send "\r"; exp_continue }
-              "Application version:" { send "\r"; exp_continue }
-              "version code:" { send "\r"; exp_continue }
-              "Display mode:" { send "\r"; exp_continue }
-              "Orientation:" { send "\r"; exp_continue }
+              "version name" { send "\r"; exp_continue }
+              "version code" { send "\r"; exp_continue }
+              "Display mode" { send "\r"; exp_continue }
+              "Orientation" { send "\r"; exp_continue }
               "status bar" { send "\r"; exp_continue }
               "navigation bar" { send "\r"; exp_continue }
               "splash screen" { send "\r"; exp_continue }
               "icon" { send "\r"; exp_continue }
+              "maskable" { send "\r"; exp_continue }
+              "monochrome" { send "\r"; exp_continue }
               "shortcuts" { send "\r"; exp_continue }
               "signing key" { send "\r"; exp_continue }
-              "Key store" { send "android\r"; exp_continue }
+              "Key Store" { send "android\r"; exp_continue }
               "Key password" { send "android\r"; exp_continue }
+              "alias" { send "\r"; exp_continue }
               eof
             }
           '
           echo "=== Files after init ==="
-          ls -la
+          ls -la /tmp/twa-build/
 
-      - name: Build APK
-        working-directory: twa-build
+      - name: Copy keystore and build directly with Gradle
         run: |
-          expect -c '
-            log_user 1
-            set timeout 300
-            spawn bubblewrap build --skipPwaValidation
-            expect {
-              "regenerate your project" { send "n\r"; exp_continue }
-              "Key Store:" { send "android\r"; exp_continue }
-              "Key password" { send "android\r"; exp_continue }
-              "alias" { send "android\r"; exp_continue }
-              eof
-            }
-          '
-          echo "=== Files after build ==="
-          find . -name "*.apk" 2>/dev/null || echo "No APK found"
+          cp twa-keystore.jks /tmp/twa-build/android.keystore
+          cd /tmp/twa-build
+          echo "=== All files ==="
+          ls -la
+          echo "=== Running Gradle build ==="
+          if [ -f "gradlew" ]; then
+            chmod +x gradlew
+            ./gradlew assembleRelease \
+              -Pandroid.injected.signing.store.file=$(pwd)/android.keystore \
+              -Pandroid.injected.signing.store.password=android \
+              -Pandroid.injected.signing.key.alias=incomesplitter \
+              -Pandroid.injected.signing.key.password=android \
+              --no-daemon
+          else
+            echo "No gradlew found - init did not complete"
+            find /tmp/twa-build -type f
+          fi
 
-      - name: Search for APK
-        run: find /home/runner/work -name "*.apk" 2>/dev/null || echo "No APK found anywhere"
+      - name: Find APK
+        run: find /tmp/twa-build -name "*.apk" 2>/dev/null || echo "No APK found"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: income-splitter-apk
-          path: |
-            twa-build/*.apk
-            twa-build/app-release-unsigned.apk
-            twa-build/app-release-signed.apk
-            twa-build/app/build/outputs/apk/**/*.apk
+          path: /tmp/twa-build/app/build/outputs/apk/**/*.apk
           if-no-files-found: warn
