@@ -32,7 +32,6 @@ jobs:
       - name: Build APK
         run: |
           cd twa
-          gradle wrapper --gradle-version 8.4
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
 
