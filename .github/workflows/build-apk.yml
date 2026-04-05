@@ -104,7 +104,11 @@ jobs:
           '
 
       - name: List output files
-        run: find twa-build -name "*.apk" 2>/dev/null || echo "No APK found in twa-build"
+        run: |
+          echo "=== Searching entire workspace for APKs ==="
+          find /home/runner/work -name "*.apk" 2>/dev/null || echo "No APK anywhere in workspace"
+          echo "=== twa-build directory contents ==="
+          find twa-build -type f 2>/dev/null | head -50
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
