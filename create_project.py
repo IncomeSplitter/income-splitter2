@@ -28,32 +28,38 @@ except Exception as e:
 # Copy keystore
 shutil.copy('app.keystore', 'twa/app.keystore')
 
-# settings.gradle
-with open('twa/settings.gradle', 'w') as f:
-    f.write("include ':app'\n")
-
-# Root build.gradle
+# Root build.gradle - Gradle 9 compatible
 with open('twa/build.gradle', 'w') as f:
-    f.write("""buildscript {
+    f.write("""plugins {
+    id 'com.android.application' version '8.5.2' apply false
+}
+""")
+
+# settings.gradle - Gradle 9 compatible
+with open('twa/settings.gradle', 'w') as f:
+    f.write("""pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
     }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:8.1.4'
-    }
 }
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
+rootProject.name = 'IncomeSplitter'
+include ':app'
 """)
 
 # App build.gradle
 with open('twa/app/build.gradle', 'w') as f:
-    f.write("""apply plugin: 'com.android.application'
+    f.write("""plugins {
+    id 'com.android.application'
+}
 android {
     namespace 'com.incomesplitter.app'
     compileSdkVersion 34
@@ -100,10 +106,26 @@ org.gradle.jvmargs=-Xmx2048m
 with open('twa/gradle/wrapper/gradle-wrapper.properties', 'w') as f:
     f.write("""distributionBase=GRADLE_USER_HOME
 distributionPath=wrapper/dists
-distributionUrl=https\\://services.gradle.org/distributions/gradle-8.4-bin.zip
+distributionUrl=https\\://services.gradle.org/distributions/gradle-8.9-bin.zip
 zipStoreBase=GRADLE_USER_HOME
 zipStorePath=wrapper/dists
 """)
+
+# gradlew script
+with open('twa/gradlew', 'w') as f:
+    f.write("""#!/bin/sh
+APP_HOME="$(cd "$(dirname "$0")" && pwd)"
+exec "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" "$@" 2>/dev/null || exec gradle "$@"
+""")
+os.chmod('twa/gradlew', 0o755)
+
+# Download gradle wrapper jar
+try:
+    jar_url = 'https://raw.githubusercontent.com/gradle/gradle/v8.9.0/gradle/wrapper/gradle-wrapper.jar'
+    urllib.request.urlretrieve(jar_url, 'twa/gradle/wrapper/gradle-wrapper.jar')
+    print("Gradle wrapper jar downloaded")
+except Exception as e:
+    print(f"Wrapper jar download failed: {e} - will use system gradle")
 
 # AndroidManifest.xml
 with open('twa/app/src/main/AndroidManifest.xml', 'w') as f:
