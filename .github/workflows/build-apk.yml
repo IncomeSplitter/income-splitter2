@@ -95,7 +95,13 @@ jobs:
 
       - name: Build APK
         working-directory: twa-build
-        run: bubblewrap build --skipPwaValidation
+        run: |
+          expect -c '
+            spawn bubblewrap build --skipPwaValidation
+            expect "would you like to regenerate your project"
+            send "n\r"
+            expect eof
+          '
 
       - name: List output files
         run: find twa-build -name "*.apk" 2>/dev/null || echo "No APK found"
