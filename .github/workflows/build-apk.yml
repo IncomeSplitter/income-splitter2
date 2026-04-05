@@ -87,21 +87,27 @@ jobs:
         working-directory: twa-build
         run: |
           expect -c '
+            log_user 1
             spawn bubblewrap init --manifest=https://incomesplitter.github.io/income-splitter2/manifest.json --skipPwaValidation
             expect "Do you want Bubblewrap to install the JDK"
             send "n\r"
             expect eof
           '
+          echo "=== Files after init ==="
+          ls -la
 
       - name: Build APK
         working-directory: twa-build
         run: |
           expect -c '
-            spawn bubblewrap build --skipPwaValidation
+            log_user 1
+            spawn bubblewrap build --skipPwaValidation --verbose
             expect "would you like to regenerate your project"
             send "n\r"
             expect eof
           '
+          echo "=== Files after build ==="
+          ls -la
 
       - name: List output files
         run: |
