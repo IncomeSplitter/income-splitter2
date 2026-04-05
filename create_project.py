@@ -106,17 +106,14 @@ org.gradle.jvmargs=-Xmx2048m
 with open('twa/gradle/wrapper/gradle-wrapper.properties', 'w') as f:
     f.write("""distributionBase=GRADLE_USER_HOME
 distributionPath=wrapper/dists
-distributionUrl=https\\://services.gradle.org/distributions/gradle-8.9-bin.zip
+distributionUrl=https\\://services.gradle.org/distributions/gradle-8.7-bin.zip
 zipStoreBase=GRADLE_USER_HOME
 zipStorePath=wrapper/dists
 """)
 
 # gradlew script
 with open('twa/gradlew', 'w') as f:
-    f.write("""#!/bin/sh
-APP_HOME="$(cd "$(dirname "$0")" && pwd)"
-exec "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" "$@" 2>/dev/null || exec gradle "$@"
-""")
+    f.write('#!/bin/sh\nexec "$(dirname "$0")/gradle/wrapper/gradlew" "$@" 2>/dev/null || exec gradle "$@"\n')
 os.chmod('twa/gradlew', 0o755)
 
 # Download gradle wrapper jar
