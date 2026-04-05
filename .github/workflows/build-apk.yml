@@ -80,9 +80,18 @@ jobs:
           print('Manifest written successfully')
           "
 
+      - name: Install expect
+        run: sudo apt-get install -y expect
+
       - name: Generate TWA project
         working-directory: twa-build
-        run: bubblewrap generate --manifest=./twa-manifest.json
+        run: |
+          expect -c '
+            spawn bubblewrap init --manifest=https://incomesplitter.github.io/income-splitter2/manifest.json --skipPwaValidation
+            expect "Do you want Bubblewrap to install the JDK"
+            send "n\r"
+            expect eof
+          '
 
       - name: Build APK
         working-directory: twa-build
