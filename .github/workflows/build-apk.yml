@@ -22,27 +22,22 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Create keystore
-        run: |
-          keytool -genkeypair -dname "CN=Income Splitter, O=IncomeSplitter, C=NZ" -alias incomesplitter -keypass android123 -keystore app.keystore -storepass android123 -validity 10000 -keyalg RSA -keysize 2048
-
-      - name: Install Gradle
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
-          gradle-version: '8.7'
+          gradle-version: "8.7"
 
-      - name: Create Android project files
+      - name: Create project files
         run: python3 create_project.py
 
-      - name: Build APK
-        run: |
-          cd twa
-          gradle wrapper --gradle-version 8.7 --distribution-type bin
-          chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
+      - name: Make gradlew executable
+        run: chmod +x twa/gradlew
+
+      - name: Build Release APK
+        run: cd twa && ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Find APK
-        run: find twa -name "*.apk" 2>/dev/null || echo "No APK found"
+        run: find twa -name "*.apk" || echo "No APK found"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
