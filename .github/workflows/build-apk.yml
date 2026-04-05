@@ -32,8 +32,7 @@ jobs:
       - name: Build APK
         run: |
           cd twa
-          chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
+          gradle assembleRelease --no-daemon
 
       - name: Find APK
         run: find twa -name "*.apk" 2>/dev/null || echo "No APK found"
