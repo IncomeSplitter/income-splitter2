@@ -22,94 +22,191 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install Bubblewrap and expect
-        run: |
-          npm install -g @bubblewrap/cli
-          sudo apt-get install -y expect
-
-      - name: Setup Bubblewrap JDK config
-        run: |
-          mkdir -p ~/.bubblewrap
-          echo '{"jdkPath":"/opt/hostedtoolcache/Java_Temurin-Distributions_jdk/17.0.14-7/x64","androidSdkPath":"/usr/local/lib/android/sdk"}' > ~/.bubblewrap/config.json
-
       - name: Create keystore
         run: |
           keytool -genkeypair \
             -dname "CN=Income Splitter, OU=App, O=IncomeSplitter, L=Auckland, S=Auckland, C=NZ" \
             -alias incomesplitter \
-            -keypass android \
-            -keystore twa-keystore.jks \
-            -storepass android \
+            -keypass android123 \
+            -keystore app.keystore \
+            -storepass android123 \
             -validity 10000 \
             -keyalg RSA \
             -keysize 2048
 
-      - name: Init Bubblewrap project
-        working-directory: /tmp
+      - name: Create full Android TWA project
         run: |
-          mkdir twa-build && cd twa-build
-          expect -c '
-            log_user 1
-            set timeout 120
-            spawn bubblewrap init --manifest=https://incomesplitter.github.io/income-splitter2/manifest.json --skipPwaValidation
-            expect {
-              "install the JDK" { send "n\r"; exp_continue }
-              "Domain:" { send "\r"; exp_continue }
-              "URL path:" { send "\r"; exp_continue }
-              "Application name:" { send "\r"; exp_continue }
-              "short name:" { send "\r"; exp_continue }
-              "version name" { send "\r"; exp_continue }
-              "version code" { send "\r"; exp_continue }
-              "Display mode" { send "\r"; exp_continue }
-              "Orientation" { send "\r"; exp_continue }
-              "status bar" { send "\r"; exp_continue }
-              "navigation bar" { send "\r"; exp_continue }
-              "splash screen" { send "\r"; exp_continue }
-              "icon" { send "\r"; exp_continue }
-              "maskable" { send "\r"; exp_continue }
-              "monochrome" { send "\r"; exp_continue }
-              "shortcuts" { send "\r"; exp_continue }
-              "signing key" { send "\r"; exp_continue }
-              "Key Store" { send "android\r"; exp_continue }
-              "Key password" { send "android\r"; exp_continue }
-              "alias" { send "\r"; exp_continue }
-              eof
-            }
-          '
-          echo "=== Files after init ==="
-          ls -la /tmp/twa-build/
+          mkdir -p twa/app/src/main/res/mipmap-mdpi
+          mkdir -p twa/app/src/main/res/mipmap-hdpi
+          mkdir -p twa/app/src/main/res/mipmap-xhdpi
+          mkdir -p twa/app/src/main/res/mipmap-xxhdpi
+          mkdir -p twa/app/src/main/res/mipmap-xxxhdpi
+          mkdir -p twa/app/src/main/res/values
+          mkdir -p twa/gradle/wrapper
 
-      - name: Copy keystore and build directly with Gradle
+          # Download icon for all densities
+          curl -sL "https://incomesplitter.github.io/income-splitter2/icon-512.png" -o /tmp/icon.png
+          for dir in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+            cp /tmp/icon.png twa/app/src/main/res/$dir/ic_launcher.png
+          done
+
+          # Copy keystore
+          cp app.keystore twa/app.keystore
+
+          # settings.gradle
+          cat > twa/settings.gradle << 'EOF'
+include ':app'
+EOF
+
+          # Root build.gradle
+          cat > twa/build.gradle << 'EOF'
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.1.4'
+    }
+}
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+EOF
+
+          # App build.gradle
+          cat > twa/app/build.gradle << 'EOF'
+apply plugin: 'com.android.application'
+android {
+    namespace 'com.incomesplitter.app'
+    compileSdkVersion 34
+    defaultConfig {
+        applicationId 'com.incomesplitter.app'
+        minSdkVersion 21
+        targetSdkVersion 34
+        versionCode 1
+        versionName '1.0'
+    }
+    signingConfigs {
+        release {
+            storeFile file('app.keystore')
+            storePassword 'android123'
+            keyAlias 'incomesplitter'
+            keyPassword 'android123'
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+}
+EOF
+
+          # gradle.properties
+          cat > twa/gradle.properties << 'EOF'
+android.useAndroidX=true
+android.enableJetifier=true
+org.gradle.jvmargs=-Xmx2048m
+EOF
+
+          # gradle wrapper properties
+          cat > twa/gradle/wrapper/gradle-wrapper.properties << 'EOF'
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+EOF
+
+          # AndroidManifest.xml
+          cat > twa/app/src/main/AndroidManifest.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+    <application
+        android:label="Income Splitter"
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="true">
+        <activity
+            android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
+            android:exported="true">
+            <meta-data
+                android:name="android.support.customtabs.trusted.DEFAULT_URL"
+                android:value="https://incomesplitter.github.io/income-splitter2/" />
+            <meta-data
+                android:name="android.support.customtabs.trusted.STATUS_BAR_COLOR"
+                android:value="@color/colorPrimary" />
+            <meta-data
+                android:name="android.support.customtabs.trusted.SPLASH_SCREEN_BACKGROUND_COLOR"
+                android:value="@color/colorPrimary" />
+            <meta-data
+                android:name="android.support.customtabs.trusted.FALLBACK_STRATEGY"
+                android:value="customtabs" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https"
+                      android:host="incomesplitter.github.io"
+                      android:pathPrefix="/income-splitter2" />
+            </intent-filter>
+        </activity>
+        <service
+            android:name="com.google.androidbrowserhelper.trusted.DelegationService"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+    </application>
+</manifest>
+EOF
+
+          # colors.xml
+          cat > twa/app/src/main/res/values/colors.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#0f1117</color>
+</resources>
+EOF
+
+      - name: Build APK with Gradle
         run: |
-          cp twa-keystore.jks /tmp/twa-build/android.keystore
-          cd /tmp/twa-build
-          echo "=== All files ==="
-          ls -la
-          echo "=== Running Gradle build ==="
-          if [ -f "gradlew" ]; then
-            chmod +x gradlew
-            ./gradlew assembleRelease \
-              -Pandroid.injected.signing.store.file=$(pwd)/android.keystore \
-              -Pandroid.injected.signing.store.password=android \
-              -Pandroid.injected.signing.key.alias=incomesplitter \
-              -Pandroid.injected.signing.key.password=android \
-              --no-daemon
-          else
-            echo "No gradlew found - init did not complete"
-            find /tmp/twa-build -type f
-          fi
+          cd twa
+          gradle wrapper --gradle-version 8.4
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Find APK
-        run: find /tmp/twa-build -name "*.apk" 2>/dev/null || echo "No APK found"
+        run: find twa -name "*.apk" 2>/dev/null || echo "No APK found"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: income-splitter-apk
-          path: /tmp/twa-build/app/build/outputs/apk/**/*.apk
-          if-no-files-found: warn
+          path: twa/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
