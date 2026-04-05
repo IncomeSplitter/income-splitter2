@@ -22,163 +22,78 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Create TWA Android project structure
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Bubblewrap
+        run: npm install -g @bubblewrap/cli
+
+      - name: Setup Bubblewrap JDK config
         run: |
-          mkdir -p twa-app/app/src/main/res/values
-          mkdir -p twa-app/app/src/main/res/xml
-          mkdir -p twa-app/app/src/main/res/mipmap-hdpi
-          mkdir -p twa-app/app/src/main/java/com/incomesplitter/app
-          # settings.gradle
-          cat > twa-app/settings.gradle << 'SETTINGSEOF'
-          pluginManagement {
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
-          rootProject.name = "IncomeSplitter"
-          include ':app'
-          SETTINGSEOF
-          # Root build.gradle
-          cat > twa-app/build.gradle << 'BUILDEOF'
-          plugins {
-              id 'com.android.application' version '8.5.2' apply false
-          }
-          BUILDEOF
-          # App build.gradle
-          cat > twa-app/app/build.gradle << 'APPEOF'
-          plugins {
-              id 'com.android.application'
-          }
-          android {
-              namespace 'com.incomesplitter.app'
-              compileSdk 34
-              defaultConfig {
-                  applicationId 'com.incomesplitter.app'
-                  minSdk 19
-                  targetSdk 34
-                  versionCode 1
-                  versionName '1.0.0'
-              }
-              buildTypes {
-                  release {
-                      minifyEnabled false
-                  }
-              }
-              compileOptions {
-                  sourceCompatibility JavaVersion.VERSION_17
-                  targetCompatibility JavaVersion.VERSION_17
-              }
-          }
-          dependencies {
-              implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
-              implementation 'androidx.appcompat:appcompat:1.6.1'
-          }
-          APPEOF
-          # AndroidManifest.xml
-          cat > twa-app/app/src/main/AndroidManifest.xml << 'MANEOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <queries>
-                  <intent>
-                      <action android:name="android.intent.action.VIEW" />
-                      <category android:name="android.intent.category.BROWSABLE" />
-                      <data android:scheme="https" />
-                  </intent>
-              </queries>
-              <application
-                  android:label="Income Splitter"
-                  android:icon="@mipmap/ic_launcher"
-                  android:theme="@style/Theme.LauncherActivity">
-                  <activity
-                      android:name="com.google.androidbrowserhelper.customtabs.CustomTabsLauncherActivity"
-                      android:exported="true">
-                      <meta-data
-                          android:name="android.support.customtabs.trusted.DEFAULT_URL"
-                          android:value="https://incomesplitter.github.io/income-splitter2/" />
-                      <meta-data
-                          android:name="android.support.customtabs.trusted.STATUS_BAR_COLOR"
-                          android:value="@color/colorPrimary" />
-                      <meta-data
-                          android:name="android.support.customtabs.trusted.SPLASH_SCREEN_BACKGROUND_COLOR"
-                          android:value="@color/colorPrimary" />
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-                  </activity>
-                  <service
-                      android:name="com.google.androidbrowserhelper.trusted.DelegationService"
-                      android:exported="true"
-                      android:enabled="true">
-                      <intent-filter>
-                          <action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE"/>
-                          <category android:name="android.intent.category.DEFAULT"/>
-                      </intent-filter>
-                  </service>
-              </application>
-          </manifest>
-          MANEOF
-          # Colors
-          cat > twa-app/app/src/main/res/values/colors.xml << 'COLOREOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <color name="colorPrimary">#0f1117</color>
-              <color name="colorPrimaryDark">#0f1117</color>
-          </resources>
-          COLOREOF
-          # Styles
-          cat > twa-app/app/src/main/res/values/styles.xml << 'STYLEEOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <style name="Theme.LauncherActivity" parent="Theme.AppCompat.NoActionBar">
-                  <item name="android:windowBackground">@color/colorPrimary</item>
-                  <item name="android:statusBarColor">@color/colorPrimary</item>
-              </style>
-          </resources>
-          STYLEEOF
-          # Download app icon
-          curl -L "https://incomesplitter.github.io/income-splitter2/icon-512.png" \
-            -o twa-app/app/src/main/res/mipmap-hdpi/ic_launcher.png 2>/dev/null || \
-            cp twa-app/app/src/main/res/mipmap-hdpi/ic_launcher.png \
-            twa-app/app/src/main/res/mipmap-hdpi/ic_launcher.png 2>/dev/null || true
-          # gradle.properties
-          cat > twa-app/gradle.properties << 'PROPEOF'
-          android.useAndroidX=true
-          android.enableJetifier=true
-          org.gradle.jvmargs=-Xmx2048m
-          PROPEOF
-          # gradlew script
-          cat > twa-app/gradlew << 'GRADLEWEOF'
-          #!/bin/sh
-          exec gradle "$@"
-          GRADLEWEOF
-          chmod +x twa-app/gradlew
-          # gradle wrapper properties
-          mkdir -p twa-app/gradle/wrapper
-          cat > twa-app/gradle/wrapper/gradle-wrapper.properties << 'WRAPEOF'
-          distributionBase=GRADLE_USER_HOME
-          distributionPath=wrapper/dists
-          distributionUrl=https\://services.gradle.org/distributions/gradle-8.9-bin.zip
-          zipStoreBase=GRADLE_USER_HOME
-          zipStorePath=wrapper/dists
-          WRAPEOF
-      - name: Build debug APK
-        working-directory: twa-app
+          mkdir -p ~/.bubblewrap
+          echo '{"jdkPath":"/opt/hostedtoolcache/Java_Temurin-Distributions_jdk/17.0.14-7/x64","androidSdkPath":"/usr/local/lib/android/sdk"}' > ~/.bubblewrap/config.json
+
+      - name: Create TWA manifest
         run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          mkdir twa-build
+          python3 -c "
+          import json
+          manifest = {
+            'packageId': 'com.incomesplitter.app',
+            'host': 'incomesplitter.github.io',
+            'name': 'Income Splitter',
+            'launcherName': 'Splitter',
+            'display': 'standalone',
+            'themeColor': '#0f1117',
+            'navigationColor': '#0f1117',
+            'navigationColorDark': '#0f1117',
+            'navigationDividerColor': '#0f1117',
+            'navigationDividerColorDark': '#0f1117',
+            'backgroundColor': '#0f1117',
+            'enableNotifications': False,
+            'startUrl': '/income-splitter2/',
+            'iconUrl': 'https://incomesplitter.github.io/income-splitter2/icon-512.png',
+            'maskableIconUrl': 'https://incomesplitter.github.io/income-splitter2/icon-512.png',
+            'monochromeIconUrl': 'https://incomesplitter.github.io/income-splitter2/icon-512.png',
+            'splashScreenFadeOutDuration': 300,
+            'signingKey': {'path': './android.keystore', 'alias': 'incomesplitter'},
+            'appVersionCode': 1,
+            'appVersionName': '1.0.0',
+            'shortcuts': [],
+            'generatorApp': 'bubblewrap-cli',
+            'webManifestUrl': 'https://incomesplitter.github.io/income-splitter2/manifest.json',
+            'fallbackType': 'customtabs',
+            'features': {},
+            'alphaDependencies': {'enabled': False},
+            'enableSiteSettingsShortcut': True,
+            'isChromeOSOnly': False,
+            'isMetaQuest': False,
+            'fullScopeUrl': 'https://incomesplitter.github.io/income-splitter2/',
+            'minSdkVersion': 19,
+            'orientation': 'portrait',
+            'fingerprints': [{'name': 'debug', 'value': 'CE:16:3A:54:8D:8F:2F:15:A9:F5:CA:BB:30:76:6F:46:50:67:A2:91:48:DE:B5:CC:40:07:ED:BF:CB:05:19:CC'}]
+          }
+          with open('twa-build/twa-manifest.json', 'w') as f:
+              json.dump(manifest, f, indent=2)
+          print('Manifest written successfully')
+          "
+
+      - name: Generate TWA project
+        working-directory: twa-build
+        run: bubblewrap generate --manifest=./twa-manifest.json
+
+      - name: Build APK
+        working-directory: twa-build
+        run: bubblewrap build --skipPwaValidation
+
+      - name: List output files
+        run: find twa-build -name "*.apk" 2>/dev/null || echo "No APK found"
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: income-splitter-apk
-          path: twa-app/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+          path: twa-build/*.apk
+          if-no-files-found: warn
