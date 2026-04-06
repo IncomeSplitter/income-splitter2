@@ -2,9 +2,7 @@
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target": {
     "namespace": "android_app",
-    "package_name": "com.incomesplitter.app",
-    "sha256_cert_fingerprints": [
-      "CE:16:3A:54:8D:8F:2F:15:A9:F5:CA:BB:30:76:6F:46:50:67:A2:91:48:DE:B5:CC:40:07:ED:BF:CB:05:19:CC"
-    ]
+    "package_name": "io.github.incomesplitter.twa",
+    "sha256_cert_fingerprints": ["2D:83:08:B4:E8:64:4C:8D:30:40:99:16:80:3E:2B:BF:79:46:E5:44:02:CA:C9:8C:32:7F:35:8A:0A:FA:37:1F"]
   }
 }]
