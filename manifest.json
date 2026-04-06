@@ -1,8 +1,8 @@
 {
   "name": "Income Splitter",
-  "short_name": "Splitter",
+  "short_name": "$INC Splitter",
   "description": "Split your income into buckets — tax, savings, draw and more. Fixed amounts or percentages.",
-  "start_url": "./",
+  "start_url": "/income-splitter2/",
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone","fullscreen"],
