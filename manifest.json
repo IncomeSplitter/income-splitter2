@@ -2,20 +2,22 @@
   "name": "Income Splitter",
   "short_name": "Splitter",
   "description": "Split your income into buckets — tax, savings, draw and more. Fixed amounts or percentages.",
-  "start_url": "/",
+  "start_url": "/income-splitter2/",
   "scope": "/income-splitter2/",
   "display": "standalone",
   "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "categories": ["finance", "utilities"],
   "icons": [
     {
-      "src": "https://incomesplitter.github.io/income-splitter2/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://incomesplitter.github.io/income-splitter2/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
