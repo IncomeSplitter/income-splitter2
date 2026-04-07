@@ -1,4 +1,4 @@
-const CACHE = 'income-splitter-v1';
+const CACHE = 'income-splitter-v2';
 const ASSETS = [
   '/income-splitter2/',
   '/income-splitter2/index.html',
