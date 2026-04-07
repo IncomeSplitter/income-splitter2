@@ -1,0 +1,34 @@
+Privacy Policy for Income Splitter - $INC Splitter
+
+Last updated: 07/04/2026
+
+1. Overview
+
+Income Splitter is designed to help users calculate and manage income allocations. We respect your privacy and are committed to protecting your information.
+
+2. Data Collection
+
+Income Splitter does not collect, store, or share any personal data.
+
+All calculations and inputs are processed locally on your device and are not transmitted to any external servers.
+
+3. Third-Party Services
+
+This app may rely on standard web technologies or platform services (such as your device’s browser engine), but it does not integrate with third-party analytics, advertising, or tracking services.
+
+4. Data Security
+
+Because no personal data is collected or stored, there is no risk of your personal information being accessed or shared by this app.
+
+5. Children’s Privacy
+
+This app does not knowingly collect any personal information from children.
+
+6. Changes to This Policy
+
+We may update this Privacy Policy from time to time. Any changes will be posted on this page.
+
+7. Contact
+
+If you have any questions about this Privacy Policy, you can contact us at:
+incomesplitter@gmail.com
