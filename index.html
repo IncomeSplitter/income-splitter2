@@ -40,10 +40,15 @@
   }
 .app {
   width: 100%;
-  max-width: 100%;
-  padding: clamp(12px, 2vw, 24px);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
 }
 
+.app-inner {
+  width: 100%;
+  max-width: 900px;
+}
   /* 1. Full screen base */
   html, body {
     width: 100%;
